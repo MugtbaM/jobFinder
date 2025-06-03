@@ -1,7 +1,4 @@
 // src/components/HomePage.js
-
-
-// src/components/HomePage.js
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -63,40 +60,3 @@ const styles = {
 };
 
 export default HomePage;
-
-
-
-
-
-
-
-// import React from 'react';
-// import { Link } from 'react-router-dom';
-
-// function HomePage() {
-//   return (
-//     <div style={styles.container}>
-//       <h1>Welcome to AI Enhanced JobFinder</h1>
-//       <p>We help you find the perfect job based on your profile.</p>
-//       <div style={styles.buttonContainer}>
-//         <Link to="/data-entry">
-//           <button style={styles.button}>Enter Your Data</button>
-//         </Link>
-//         <Link to="/resume-parse">
-//           <button style={styles.button}>Parse Your Resume</button>
-//         </Link>
-//       </div>
-//     </div>
-//   );
-// }
-
-// const styles = {
-//   container: { textAlign: 'center', marginTop: '50px' },
-//   buttonContainer: { marginTop: '30px' },
-//   button: {
-//     padding: '15px 25px',
-//     margin: '10px',
-//     fontSize: '16px',
-//     cursor: 'pointer'
-//   }
-// };

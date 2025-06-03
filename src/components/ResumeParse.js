@@ -1,11 +1,10 @@
-
-// src/components/ResumeParse.js
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 function ResumeParse() {
   const [file, setFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleFileChange = (e) => {
@@ -21,22 +20,38 @@ function ResumeParse() {
 
     const formData = new FormData();
     formData.append('resume', file);
+    setIsLoading(true); // Start loading
 
     try {
       const response = await axios.post('http://localhost:5000/api/parse_resume', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       console.log(response.data);
-      navigate('/prefrences');
+      navigate('/prefrences', {
+        state: {
+          // predictedJobTitle: response.data
+          predictedJobTitle: response.data.predicted_job,
+          confidence: response.data.confidence
+        }
+      });
     } catch (error) {
       console.error('Error during resume parsing:', error);
+    } finally {
+      setIsLoading(false); // Stop loading in any case
     }
   };
 
   return (
     <div style={styles.container}>
+      {isLoading && (
+        <div style={overlayStyles}>
+          <div style={spinnerStyles}></div>
+        </div>
+      )}
+      
       <div style={styles.card}>
         <h2 style={styles.title}>Upload Your Resume</h2>
         <p style={styles.subtitle}>Supported formats: PDF, DOCX</p>
@@ -47,18 +62,58 @@ function ResumeParse() {
               accept=".pdf,.docx" 
               onChange={handleFileChange} 
               style={styles.fileInput} 
+              disabled={isLoading}
             />
             Choose File
           </label>
           {file && <p style={styles.fileName}>{file.name}</p>}
-          <button type="submit" style={styles.button}>
-            Parse and Search Jobs →
+          <button 
+            type="submit" 
+            style={styles.button}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Processing...' : 'Parse and Search Jobs →'}
           </button>
         </form>
       </div>
+
+      {/* Add CSS animation */}
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 }
+
+// Loading overlay styles
+const overlayStyles = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(255, 255, 255, 0.6)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000,
+};
+
+const spinnerStyles = {
+  border: '4px solid #f3f3f3',
+  borderTop: '4px solid #3498db',
+  borderRadius: '50%',
+  width: '40px',
+  height: '40px',
+  animation: 'spin 1s linear infinite',
+};
+
+
 
 const styles = {
   container: {

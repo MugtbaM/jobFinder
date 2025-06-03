@@ -1,24 +1,18 @@
 // src/components/DataEntry.js
 
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 function DataEntry() {
-  // Education state (array of objects)
-  const [educationEntries, setEducationEntries] = useState([
-    { degree: '', institute: '' }
-  ]);
-  const navigate = useNavigate();
-
-  // Experience state (array of objects)
-  const [experienceEntries, setExperienceEntries] = useState([
-    { role: '', startDate: '', endDate: '' }
-  ]);
-
-  // Skills state (array of strings)
+  const [educationEntries, setEducationEntries] = useState([{ degree: '', institute: '' }]);
+  const [experienceEntries, setExperienceEntries] = useState([{ role: '', startDate: '', endDate: '' }]);
   const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
 
   // Add education field
   const addEducation = () => {
@@ -38,6 +32,11 @@ function DataEntry() {
     }
   };
 
+  const removeSkill = (index) => {
+    const updatedSkills = skills.filter((_, i) => i !== index);
+    setSkills(updatedSkills);
+  };
+
   // Handle education input changes
   const handleEducationChange = (index, field, value) => {
     const updatedEntries = [...educationEntries];
@@ -52,10 +51,11 @@ function DataEntry() {
     setExperienceEntries(updatedEntries);
   };
 
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Prepare data for submission
+    setIsLoading(true);
     const userData = {
       education: educationEntries,
       experience: experienceEntries,
@@ -63,114 +63,197 @@ function DataEntry() {
     };
 
     try {
-      const response = await axios.post('http://localhost:5000/api/search-from-data', userData);
-      console.log(response.data);
-      navigate('/prefrences');
+      const response = await axios.post('http://localhost:5000/api/entered_data', userData,
+      {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      navigate('/prefrences', {
+        state: {
+          predictedJobTitle: response.data.predicted_job,
+          confidence: response.data.confidence
+        }
+      });
     } catch (error) {
       console.error('Error during search process:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+
   return (
     <div style={styles.pageContainer}>
-    <div style={styles.container}>
-      <h2>Enter Your Information</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        {/* Education Section */}
-        <div style={styles.section}>
-          <h3>Education Information</h3>
-          {educationEntries.map((entry, index) => (
-            <div key={index} style={styles.entryGroup}>
-              <input
-                type="text"
-                placeholder="Degree"
-                value={entry.degree}
-                onChange={(e) => handleEducationChange(index, 'degree', e.target.value)}
-                required
-                style={styles.input}
-              />
-              <input
-                type="text"
-                placeholder="Institute"
-                value={entry.institute}
-                onChange={(e) => handleEducationChange(index, 'institute', e.target.value)}
-                required
-                style={styles.input}
-              />
-            </div>
-          ))}
-          <button type="button" onClick={addEducation} style={styles.addButton}>
-            + Add Education
-          </button>
+      {isLoading && (
+        <div style={overlayStyles}>
+          <div style={spinnerStyles}></div>
         </div>
+      )}
 
-        {/* Experience Section */}
-        <div style={styles.section}>
-          <h3>Past Experiences</h3>
-          {experienceEntries.map((entry, index) => (
-            <div key={index} style={styles.entryGroup}>
-              <input
-                type="text"
-                placeholder="Role"
-                value={entry.role}
-                onChange={(e) => handleExperienceChange(index, 'role', e.target.value)}
-                required
-                style={styles.input}
-              />
-              <input
-                type="date"
-                placeholder="Start Date"
-                value={entry.startDate}
-                onChange={(e) => handleExperienceChange(index, 'startDate', e.target.value)}
-                required
-                style={styles.input}
-              />
-              <input
-                type="date"
-                placeholder="End Date"
-                value={entry.endDate}
-                onChange={(e) => handleExperienceChange(index, 'endDate', e.target.value)}
-                required
-                style={styles.input}
-              />
-            </div>
-          ))}
-          <button type="button" onClick={addExperience} style={styles.addButton}>
-            + Add Experience
-          </button>
-        </div>
-
-        {/* Skills Section */}
-        <div style={styles.section}>
-          <h3>Skills</h3>
-          <div style={styles.skillInputGroup}>
-            <input
-              type="text"
-              placeholder="Add skill"
-              value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
-              style={styles.skillInput}
-            />
-            <button type="button" onClick={addSkill} style={styles.addSkillButton}>
-              +
+      <div style={styles.container}>
+        <h2>Enter Your Information</h2>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          {/* Education Section */}
+          <div style={styles.section}>
+            <h3>Education Information</h3>
+            {educationEntries.map((entry, index) => (
+              <div key={index} style={styles.entryGroup}>
+                <input
+                  type="text"
+                  placeholder="Degree"
+                  value={entry.degree}
+                  onChange={(e) => handleEducationChange(index, 'degree', e.target.value)}
+                  required
+                  style={styles.input}
+                  disabled={isLoading}
+                />
+                <input
+                  type="text"
+                  placeholder="Institute"
+                  value={entry.institute}
+                  onChange={(e) => handleEducationChange(index, 'institute', e.target.value)}
+                  required
+                  style={styles.input}
+                  disabled={isLoading}
+                />
+              </div>
+            ))}
+            <button 
+              type="button" 
+              onClick={addEducation} 
+              style={styles.addButton}
+              disabled={isLoading}
+            >
+              + Add Education
             </button>
           </div>
-          <div style={styles.skillsList}>
-            {skills.map((skill, index) => (
-              <span key={index} style={styles.skillTag}>
-                {skill}
-              </span>
+
+          {/* Experience Section */}
+          <div style={styles.section}>
+            <h3>Past Experiences</h3>
+            {experienceEntries.map((entry, index) => (
+              <div key={index} style={styles.entryGroup}>
+                <input
+                  type="text"
+                  placeholder="Role"
+                  value={entry.role}
+                  onChange={(e) => handleExperienceChange(index, 'role', e.target.value)}
+                  required
+                  style={styles.input}
+                  disabled={isLoading}
+                />
+                <input
+                  type="date"
+                  placeholder="Start Date"
+                  value={entry.startDate}
+                  onChange={(e) => handleExperienceChange(index, 'startDate', e.target.value)}
+                  required
+                  style={styles.input}
+                  disabled={isLoading}
+                />
+                <input
+                  type="date"
+                  placeholder="End Date"
+                  value={entry.endDate}
+                  onChange={(e) => handleExperienceChange(index, 'endDate', e.target.value)}
+                  required
+                  style={styles.input}
+                  disabled={isLoading}
+                />
+              </div>
             ))}
+            <button 
+              type="button" 
+              onClick={addExperience} 
+              style={styles.addButton}
+              disabled={isLoading}
+            >
+              + Add Experience
+            </button>
           </div>
-        </div>
-        {/* <Link to="/prefrences"> */}
-        <button type="submit" style={styles.submitButton}>Next</button>
-        {/* </Link> */}
-      </form>
-    </div>
+
+          {/* Skills Section */}
+          <div style={styles.section}>
+            <h3>Skills</h3>
+            <div style={styles.skillInputGroup}>
+              <input
+                type="text"
+                placeholder="Add skill"
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                style={styles.skillInput}
+                disabled={isLoading}
+              />
+              <button 
+                type="button" 
+                onClick={addSkill} 
+                style={styles.addSkillButton}
+                disabled={isLoading}
+              >
+                +
+              </button>
+            </div>
+            <div style={styles.skillsList}>
+              {skills.map((skill, index) => (
+                <span key={index} style={styles.skillTag}>
+                  {skill}
+                  <button 
+                    type="button" 
+                    onClick={() => removeSkill(index)}
+                    style={styles.skillRemoveButton}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            style={styles.submitButton}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Processing...' : 'Next'}
+          </button>
+        </form>
+      </div>
+
+      {/* Add CSS animation */}
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 }
+
+  const overlayStyles = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  };
+
+  const spinnerStyles = {
+    border: '4px solid #f3f3f3',
+    borderTop: '4px solid #3498db',
+    borderRadius: '50%',
+    width: '40px',
+    height: '40px',
+    animation: 'spin 1s linear infinite',
+  };
 
 const styles = {
   pageContainer: {
@@ -253,93 +336,43 @@ const styles = {
     cursor: 'pointer',
     fontSize: '16px',
     alignSelf: 'flex-start'
+  },
+  inputGroup: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
+  },
+  removeButton: {
+    background: '#ff4444',
+    color: 'white',
+    border: 'none',
+    borderRadius: '50%',
+    width: '24px',
+    height: '24px',
+    cursor: 'pointer',
+    padding: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    '&:hover': {
+      background: '#cc0000'
+    }
+  },
+  skillRemoveButton: {
+    position: 'absolute',
+    right: '5px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'transparent',
+    border: 'none',
+    color: '#666',
+    cursor: 'pointer',
+    padding: '0 5px',
+    '&:hover': {
+      color: '#ff4444'
+    }
   }
 };
 
 export default DataEntry;
-
-
-
-
-
-
-
-
-
-
-
-
-//***
-// import React, { useState } from 'react';
-// import axios from 'axios';
-
-// function DataEntry() {
-//   const [education, setEducation] = useState('');
-//   const [experience, setExperience] = useState('');
-//   const [skills, setSkills] = useState('');
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-
-//     const userData = {
-//       education,
-//       experience,
-//       skills
-//     };
-
-//     // Send data to backend for processing
-//     try {
-//       const response = await axios.post('http://localhost:5000/api/search-from-data', userData);
-//       // Handle the response (e.g., display job listings)
-//       console.log(response.data);
-//     } catch (error) {
-//       console.error('Error during search process:', error);
-//     }
-//   };
-
-//   return (
-//     <div style={styles.container}>
-//       <h2>Enter Your Information</h2>
-//       <form onSubmit={handleSubmit} style={styles.form}>
-//         <div>
-//           <label>Education Information:</label><br />
-//           <textarea
-//             value={education}
-//             onChange={(e) => setEducation(e.target.value)}
-//             required
-//             style={styles.textarea}
-//           />
-//         </div>
-//         <div>
-//           <label>Past Experiences:</label><br />
-//           <textarea
-//             value={experience}
-//             onChange={(e) => setExperience(e.target.value)}
-//             required
-//             style={styles.textarea}
-//           />
-//         </div>
-//         <div>
-//           <label>Skills:</label><br />
-//           <textarea
-//             value={skills}
-//             onChange={(e) => setSkills(e.target.value)}
-//             required
-//             style={styles.textarea}
-//           />
-//         </div>
-//         <button type="submit" style={styles.button}>Search for Jobs</button>
-//       </form>
-//     </div>
-//   );
-// }
-
-// const styles = {
-//   container: { margin: '50px' },
-//   form: { display: 'flex', flexDirection: 'column' },
-//   textarea: { width: '100%', height: '100px', marginBottom: '20px' },
-//   button: { padding: '10px', fontSize: '16px', cursor: 'pointer' }
-// };
-
-//export default DataEntry;
-//***
