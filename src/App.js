@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import HomePage from './components/Homepaje';
 import DataEntry from './components/DataEntry';
-import ResumeParse from './components/ResumeParse';
+// import ResumeParse from './components/ResumeParse';
 import JobPreferencesForm from './components/JobPrefrencesForm';
 import JobsResults from './components/JobsResults';
 import Login from './components/login';
@@ -17,7 +17,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} /> 
+        <Route path="/" element={<HomePage />} /> 
         <Route path="/terms" element={<Terms />} />
         <Route path="/home" element={
           <ProtectedRoute>
@@ -27,11 +27,6 @@ function App() {
         <Route path="/data-entry" element={
           <ProtectedRoute>
             <DataEntry />
-          </ProtectedRoute>
-        } />
-        <Route path="/resume-parse" element={
-          <ProtectedRoute>
-            <ResumeParse />
           </ProtectedRoute>
         } />
         <Route path="/prefrences" element={
